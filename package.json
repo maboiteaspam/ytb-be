@@ -1,0 +1,16 @@
+{
+  "name": "ytb-be",
+  "description": "Web api to enable use of youtube-dl",
+  "main": "index.js",
+  "version": "0.0.0",
+  "bin": {
+    "ytb-be": "./bin.js"
+  },
+  "dependencies": {
+    "underscore": "^1.6.0",
+    "express": "^4.1.1",
+    "yargs": "^1.2.1",
+    "glob": "^3.2.9",
+    "moment": "^2.6.0"
+  }
+}
