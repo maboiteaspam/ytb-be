@@ -28,18 +28,19 @@ var YtbBe = function(options) {
 
   var server;
   var app = express();
-  var controlAccessOrigin = function(req,res,next){
+  app.all('*', function(req, res, next) {
     for( var n in options.allowOrigins ){
       var o = options.allowOrigins[n];
       if(o==req.get('Origin') || o == "*" ){
+        res.set('Access-Control-Allow-Credentials', 'true');
         res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
         res.set('Access-Control-Allow-Origin', ''+o+'');
+        res.set("Access-Control-Allow-Headers", "X-Requested-With");
         return next();
       }
     }
     return next();
-  };
-  app.use(controlAccessOrigin);
+  });
 
   var ytb_dlder_opt = {};
   if( options.bin ) ytb_dlder_opt.bin = options.bin;
