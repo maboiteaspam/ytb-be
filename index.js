@@ -31,11 +31,12 @@ var YtbBe = function(options) {
   var controlAccessOrigin = function(req,res,next){
     for( var n in options.allowOrigins ){
       var o = options.allowOrigins[n];
-      if(o==req.get('Origin')){
+      if(o==req.get('Origin') || o == "*" ){
         res.set('Access-Control-Allow-Origin', ''+o+'');
+        return next();
       }
     }
-    next();
+    return next();
   };
   app.use(controlAccessOrigin);
 
