@@ -70,7 +70,7 @@ var YtbBe = function(options) {
   // helpers to manipulate download items
   var findByUrl = function(downloads,url){
     for( var n in downloads ){
-      if( downloads[n].url == url ){
+      if( downloads[n].user_dld_url == url ){
         return downloads[n];
       }
     }
@@ -78,7 +78,7 @@ var YtbBe = function(options) {
   var removeByUrl = function(downloads,url){
     var r = [];
     for( var n in downloads ){
-      if( downloads[n].url != url ){
+      if( downloads[n].user_dld_url != url ){
         r.push( downloads[n] );
       }
     }
@@ -109,15 +109,17 @@ var YtbBe = function(options) {
   app.get('/information', function(req, res){
     var url = req.query.url;
     var dl = findByUrl(downloads,url);
-    if( dl ){
+    if( dl && dl.errors.length==0 ){
       res.json(dl.export());
     }else{
       console.info("fetching "+url)
       ytbdlder.get_information(url,function(err,dl,stderr){
         dl = new Download(dl);
+        dl.user_dld_url = url;
         if( err ){
           dl.errors.push("wrong url format");
         }
+        downloads = removeByUrl(downloads,url);
         downloads.push(dl)
         writeDownloads(exportable(downloads));
         res.json(dl.export());
@@ -139,7 +141,7 @@ var YtbBe = function(options) {
     var dl = findByUrl(downloads,url);
     if( ! dl ){
       dl = new Download({
-        url:url
+        user_dld_url:url
       });
       downloads.push( dl );
     }
