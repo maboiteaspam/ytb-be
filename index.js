@@ -11,6 +11,7 @@ var express = require('express');
 var http = require('http');
 var fs = require('fs');
 
+// default options for that server
 var d_options = {
   hostname:"localhost", // 0.0.0.0 to listen external interface
   port:3001,
@@ -28,6 +29,8 @@ var YtbBe = function(options) {
 
   var server;
   var app = express();
+
+  // Enable CORS
   app.all('*', function(req, res, next) {
     for( var n in options.allowOrigins ){
       var o = options.allowOrigins[n];
@@ -42,11 +45,15 @@ var YtbBe = function(options) {
     return next();
   });
 
+  // configure youtube-dl binary wrapper
   var ytb_dlder_opt = {};
   if( options.bin ) ytb_dlder_opt.bin = options.bin;
   if( options.dld_pattern ) ytb_dlder_opt.dld_pattern = options.dld_pattern;
   var ytbdlder = new YoutubeDl(ytb_dlder_opt);
+
+  // the list of downloads (in memory)
   var downloads = [];
+  // the lists of saved downloads (on disk)
   var loadDownloads = function(){
     var r = [];
     var file = options.run_path+"/downloads.json";
@@ -59,13 +66,8 @@ var YtbBe = function(options) {
     }
     return r;
   };
-  var _del;
-  var writeDownloads = function(downloads){
-    clearTimeout(_del);
-    setTimeout(function(){
-      fs.writeFileSync(options.run_path+"/downloads.json",JSON.stringify(downloads,null,4));
-    },500);
-  };
+
+  // helpers to manipulate download items
   var findByUrl = function(downloads,url){
     for( var n in downloads ){
       if( downloads[n].webpage_url == url ){
@@ -89,8 +91,21 @@ var YtbBe = function(options) {
     }
     return r;
   };
+
+  // delay saves of the downloads on disk to avoid corruption
+  // not sure it is really useful
+  var _del;
+  var writeDownloads = function(downloads){
+    clearTimeout(_del);
+    setTimeout(function(){
+      fs.writeFileSync(options.run_path+"/downloads.json",JSON.stringify(downloads,null,4));
+    },500);
+  };
+
+  // int downloads
   downloads = loadDownloads();
 
+  // return information about a video url
   app.get('/information', function(req, res){
     var url = req.query.url;
     var dl = findByUrl(downloads,url);
@@ -109,14 +124,18 @@ var YtbBe = function(options) {
       });
     }
   });
+  // return the list of downloads saved
   app.get('/list', function(req, res){
     res.json({
       items:exportable(downloads)
     });
   });
+  // start and save download
   app.get('/download', function(req, res){
     var url = req.query.url;
 
+    // find existing download
+    // or create a new one
     var dl = findByUrl(downloads,url);
     if( ! dl ){
       dl = new Download({
@@ -124,6 +143,8 @@ var YtbBe = function(options) {
       });
       downloads.push( dl );
     }
+
+    // configure download options
     if( req.query.audio_only=="true" )  dl.audio_only = true;
     if( req.query.audio_only=="false" ) dl.audio_only = false;
 
@@ -132,6 +153,8 @@ var YtbBe = function(options) {
 
     if( req.query.format+"" != "" )   dl.format = req.query.format;
 
+    // if it seems already started
+    // restart it
     if( dl.process ){
       dl.process.on("exit",function(){
         dl.attach_process(
@@ -145,11 +168,14 @@ var YtbBe = function(options) {
       );
     }
 
-    writeDownloads(exportable(downloads));
+    // respond downloads in proper format
+    var exported = exportable(downloads);
+    writeDownloads(exported);
     res.json({
-      items:exportable(downloads)
+      items:exported
     });
   });
+  // stop a download.
   app.get('/stop', function(req, res){
     var url = req.query.url;
 
@@ -159,10 +185,16 @@ var YtbBe = function(options) {
       dl.status = "stopped";
     }
 
+    var exported = exportable(downloads);
     res.json({
-      items:exportable(downloads)
+      items:exported
     });
   });
+  // trash a download
+  // stop process
+  // remove it from download lists
+  // eventually
+  // delete the files
   app.get('/trash', function(req, res){
     var url = req.query.url;
 
@@ -172,16 +204,19 @@ var YtbBe = function(options) {
         dl.process.on("close",function(){
           dl.process = null;
         });
-        dl.process.kill('SIGINT');
+        dl.kill_process();
       }
     }
+    // explicitly do not wait for process end, return immediately.
     downloads = removeByUrl(downloads,url);
-    writeDownloads(exportable(downloads));
+    var exported = exportable(downloads);
+    writeDownloads(exported);
     res.json({
-      items:exportable(downloads)
+      items:exported
     });
   });
 
+  // public methods.
   this.start = function(then){
     server = http.createServer(app).listen(options.port,options.hostname,null,then);
   };
