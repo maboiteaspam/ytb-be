@@ -70,7 +70,7 @@ var YtbBe = function(options) {
   // helpers to manipulate download items
   var findByUrl = function(downloads,url){
     for( var n in downloads ){
-      if( downloads[n].webpage_url == url ){
+      if( downloads[n].url == url ){
         return downloads[n];
       }
     }
@@ -78,7 +78,7 @@ var YtbBe = function(options) {
   var removeByUrl = function(downloads,url){
     var r = [];
     for( var n in downloads ){
-      if( downloads[n].webpage_url != url ){
+      if( downloads[n].url != url ){
         r.push( downloads[n] );
       }
     }
