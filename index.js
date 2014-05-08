@@ -109,7 +109,7 @@ var YtbBe = function(options) {
   app.get('/information', function(req, res){
     var url = req.query.url;
     var dl = findByUrl(downloads,url);
-    if( dl && dl.errors.length==0 ){
+    if( dl && dl.has_information ){
       res.json(dl.export());
     }else{
       console.info("fetching "+url)
@@ -118,6 +118,8 @@ var YtbBe = function(options) {
         dl.user_dld_url = url;
         if( err ){
           dl.errors.push("wrong url format");
+        }else{
+          dl.has_information = true;
         }
         downloads = removeByUrl(downloads,url);
         downloads.push(dl)
