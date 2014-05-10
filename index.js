@@ -10,6 +10,7 @@ var _ = require("underscore");
 var express = require('express');
 var http = require('http');
 var fs = require('fs');
+var path = require('path');
 
 // default options for that server
 var d_options = {
@@ -109,7 +110,7 @@ var YtbBe = function(options) {
   app.get('/information', function(req, res){
     var url = req.query.url;
     var dl = findByUrl(downloads,url);
-    if( dl && dl.has_information ){
+    if( dl && dl.has_information && !dl.errors.length ){
       res.json(dl.export());
     }else{
       console.info("fetching "+url)
@@ -117,6 +118,7 @@ var YtbBe = function(options) {
         dl = new Download(dl);
         dl.user_dld_url = url;
         if( err ){
+          dl.errors = [];
           dl.errors.push("wrong url format");
         }else{
           dl.has_information = true;
@@ -135,7 +137,7 @@ var YtbBe = function(options) {
     });
   });
   // start and save download
-  app.get('/download', function(req, res){
+  app.get('/start', function(req, res){
     var url = req.query.url;
 
     // find existing download
@@ -219,6 +221,44 @@ var YtbBe = function(options) {
       items:exported
     });
   });
+  // file user download
+  app.get('/download', function(req, res,next){
+    var url = req.query.url;
+    var filename = req.query.filename;
+
+    var dl = findByUrl(downloads,url);
+    if( dl ){
+      if( !filename ){
+        filename = dl.filename;
+      }
+      for( var n in dl.files){
+        if( dl.files[n].filename == filename ){
+          return res.download(dl.files[n].filename, path.basename(dl.files[n].filename));
+        }
+      }
+    }
+    next();
+  });
+  // stream file
+  app.get('/stream', function(req, res,next){
+    var url = req.query.url;
+    var filename = req.query.filename;
+
+    var dl = findByUrl(downloads,url);
+    if( dl ){
+      if( !filename ){
+        filename = dl.filename;
+      }
+      for( var n in dl.files){
+        if( dl.files[n].filename == filename ){
+          return res.download(dl.files[n].filename, path.basename(dl.files[n].filename));
+        }
+      }
+    }
+    next();
+  });
+
+  //app.get("/streams/", vidStreamer);
 
   // public methods.
   this.start = function(then){
