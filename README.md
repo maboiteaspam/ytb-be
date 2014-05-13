@@ -2,7 +2,7 @@
 ytb-be
 ========
 
-A backend for youtube-dl accessible thru a simple api.
+A backend for youtube-dl accessible thru a simple web api.
 Consider using ytb-wui to use it out-of-the-box.
 
 
