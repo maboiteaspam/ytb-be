@@ -6,6 +6,9 @@
   "bin": {
     "ytb-be": "./bin.js"
   },
+  "scripts": {
+    "postinstall" : "scripts/postinstall.js"
+  },
   "dependencies": {
     "underscore": "^1.6.0",
     "express": "^4.1.1",
