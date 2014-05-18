@@ -7,7 +7,7 @@
     "ytb-be": "./bin.js"
   },
   "scripts": {
-    "postinstall" : "scripts/postinstall.js"
+    "check" : "scripts/postinstall.js"
   },
   "dependencies": {
     "underscore": "^1.6.0",
